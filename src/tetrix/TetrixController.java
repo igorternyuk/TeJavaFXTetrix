@@ -1,4 +1,4 @@
-package sample;
+package tetrix;
 
 public class TetrixController {
 }
