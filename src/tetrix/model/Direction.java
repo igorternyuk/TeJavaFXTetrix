@@ -1,4 +1,4 @@
-package tetrix;
+package tetrix.model;
 
 /**
  * Created by igor on 14.03.18.

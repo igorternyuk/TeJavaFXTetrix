@@ -1,11 +1,8 @@
-package tetrix;
+package tetrix.model;
 
 import javafx.scene.canvas.GraphicsContext;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static tetrix.TetrixApp.TILE_SIZE;
 
@@ -13,20 +10,32 @@ import static tetrix.TetrixApp.TILE_SIZE;
  * Created by igor on 14.03.18.
  */
 public class Block {
-    private static final int COORDINATES_MAX_NUMBER = 2;
-    private final List<Coordinate> coordinates = new ArrayList<>(COORDINATES_MAX_NUMBER);
+    private final List<Coordinate> coordinates;
     private int x, y;
     private Tetramino parent;
 
-    public Block(final int x, final int y, final List<Coordinate> coordinates) {
-        this.coordinates.addAll(coordinates);
+    public Block(final int x, final int y, Coordinate... coordinates) {
+        this.coordinates = new ArrayList<>(Arrays.asList(coordinates));
         this.x = x;
         this.y = y;
     }
 
-    public Block(final Tetramino parent, final List<Coordinate> coordinates) {
-        this.coordinates.addAll(coordinates);
-        this.setParent(parent);
+    public Block(Coordinate... coordinates) {
+        this.coordinates = new ArrayList<>(Arrays.asList(coordinates));
+        this.x = 0;
+        this.y = 0;
+    }
+
+    public Block(final int x, final int y, final List<Coordinate> coordinates) {
+        this.coordinates = new ArrayList<>(coordinates);
+        this.x = x;
+        this.y = y;
+    }
+
+    public Block(final List<Coordinate> coordinates) {
+        this.coordinates = new ArrayList<>(coordinates);
+        this.x = 0;
+        this.y = 0;
     }
 
     public int getX() {
@@ -47,25 +56,23 @@ public class Block {
 
     public void setParent(final Tetramino parent) {
         this.parent = parent;
-        this.x = parent.getX();
-        this.y = parent.getY();
-        for (final Coordinate coordinate : this.coordinates) {
-            this.x += coordinate.getOffset() * coordinate.getDirection().getDx();
-            this.y += coordinate.getOffset() * coordinate.getDirection().getDy();
-        }
+        updatePosition();
     }
 
     public void rotateClockwise() {
-        for (final Coordinate coordinate : this.coordinates) {
-            coordinate.setDirection(coordinate.getDirection().nextClockwise());
-            this.x += coordinate.getOffset() * coordinate.getDirection().getDx();
-            this.y += coordinate.getOffset() * coordinate.getDirection().getDy();
-        }
+        this.coordinates.forEach(coordinate -> coordinate.setDirection(coordinate.getDirection().nextClockwise()));
+        updatePosition();
     }
 
     public void rotateCounterclockwise() {
+        this.coordinates.forEach(coordinate -> coordinate.setDirection(coordinate.getDirection().nextCounterclockwise()));
+        updatePosition();
+    }
+
+    private void updatePosition() {
+        this.x = parent.getX();
+        this.y = parent.getY();
         for (final Coordinate coordinate : this.coordinates) {
-            coordinate.setDirection(coordinate.getDirection().nextCounterclockwise());
             this.x += coordinate.getOffset() * coordinate.getDirection().getDx();
             this.y += coordinate.getOffset() * coordinate.getDirection().getDy();
         }
@@ -87,7 +94,7 @@ public class Block {
     }
 
     public Block copy() {
-        return new Block(this.parent, this.coordinates);
+        return new Block(this.x, this.y, this.coordinates);
     }
 
     public void draw(GraphicsContext gc) {

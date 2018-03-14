@@ -2,9 +2,9 @@ package tests;
 
 import org.junit.Before;
 import org.junit.Test;
-import tetrix.Block;
-import tetrix.Coordinate;
-import tetrix.Direction;
+import tetrix.model.Block;
+import tetrix.model.Coordinate;
+import tetrix.model.Direction;
 
 import java.util.ArrayList;
 import java.util.List;

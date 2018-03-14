@@ -2,7 +2,7 @@ package tests;
 
 import org.junit.Before;
 import org.junit.Test;
-import tetrix.Direction;
+import tetrix.model.Direction;
 
 import static org.junit.Assert.*;
 
