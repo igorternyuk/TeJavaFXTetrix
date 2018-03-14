@@ -76,6 +76,16 @@ public class Block {
         this.y += dy;
     }
 
+    public void move(final Direction direction) {
+        this.x += direction.getDx();
+        this.y += direction.getDy();
+    }
+
+    public void move(final Direction direction, final int offset) {
+        this.x += direction.getDx() * offset;
+        this.y += direction.getDy() * offset;
+    }
+
     public Block copy() {
         return new Block(this.parent, this.coordinates);
     }
