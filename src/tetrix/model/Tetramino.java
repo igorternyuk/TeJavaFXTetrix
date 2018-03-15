@@ -11,16 +11,27 @@ import java.util.stream.Collectors;
  * Created by igor on 14.03.18.
  */
 public class Tetramino {
+    public static final int NUMBER_OF_SHAPES = 7;
     private static final Map<Shape, Tetramino> PROTOTYPES = createPrototypes();
     private Shape shape;
     private int x, y;
     private List<Block> blocks;
 
-    public Tetramino(final Shape shape, final int x, final int y, Block... blocks) {
+    private Tetramino(final Shape shape, final int x, final int y, Block... blocks) {
+        this.shape = shape;
         this.x = x;
         this.y = y;
         this.blocks = new ArrayList<>(Arrays.asList(blocks));
         this.blocks.forEach(block -> block.setParent(this));
+    }
+
+    public static Tetramino createTetramino(final Shape shape, final int x, final int y) {
+        if (PROTOTYPES.get(shape) != null) {
+            final Tetramino newTetramino = PROTOTYPES.get(shape).copy();
+            newTetramino.move(x, y);
+            return newTetramino;
+        }
+        return PROTOTYPES.get(Shape.L).copy();
     }
 
     private static Map<Shape, Tetramino> createPrototypes() {
@@ -32,6 +43,8 @@ public class Tetramino {
                 new Block(new Coordinate(Direction.DOWN, 1)),
                 new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.RIGHT, 1))
         );
+        prototypes.put(Shape.L, tetraminoL);
+
         //J-shape
         Tetramino tetraminoJ = new Tetramino(Shape.J, 0, 0,
                 new Block(new Coordinate(Direction.UP, 1)),
@@ -39,16 +52,53 @@ public class Tetramino {
                 new Block(new Coordinate(Direction.DOWN, 1)),
                 new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.LEFT, 1))
         );
-        //O-shape
-        //I-shape
-        //T-shape
-        //S-shape
-        //Z-shape
-        return prototypes;
-    }
+        prototypes.put(Shape.J, tetraminoJ);
 
-    public static Tetramino createTetramino(final Shape shape, final int x, final int y) {
-        return null;
+        //O-shape
+        Tetramino tetraminoO = new Tetramino(Shape.O, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.RIGHT, 1))
+        );
+        prototypes.put(Shape.O, tetraminoO);
+
+        //I-shape
+        Tetramino tetraminoI = new Tetramino(Shape.I, 0, 0,
+                new Block(new Coordinate(Direction.UP, 1)),
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 2))
+        );
+        prototypes.put(Shape.I, tetraminoI);
+
+        //T-shape
+        Tetramino tetraminoT = new Tetramino(Shape.T, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.LEFT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1))
+        );
+        prototypes.put(Shape.T, tetraminoT);
+
+        //S-shape
+        Tetramino tetraminoS = new Tetramino(Shape.S, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.LEFT, 1))
+        );
+        prototypes.put(Shape.S, tetraminoS);
+
+        //Z-shape
+        Tetramino tetraminoZ = new Tetramino(Shape.Z, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.LEFT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.RIGHT, 1))
+        );
+        prototypes.put(Shape.Z, tetraminoZ);
+        return prototypes;
     }
 
     public int getX() {
@@ -61,6 +111,10 @@ public class Tetramino {
 
     public Shape getShape() {
         return this.shape;
+    }
+
+    public List<Block> getBlocks() {
+        return Collections.unmodifiableList(this.blocks);
     }
 
     public Color getColor() {
@@ -79,16 +133,14 @@ public class Tetramino {
 
     public void rotateClockwise() {
         System.out.println("Rotating clockwise");
+        if (this.shape.equals(Shape.O)) return;
         this.blocks.forEach(Block::rotateClockwise);
     }
 
     public void rotateCounterclockwise() {
         System.out.println("Rotating counterclockwise");
+        if (this.shape.equals(Shape.O)) return;
         this.blocks.forEach(Block::rotateCounterclockwise);
-    }
-
-    public void detach(final int x, final int y) {
-        this.blocks.removeIf(piece -> piece.getX() == x && piece.getY() == y);
     }
 
     public Tetramino copy() {

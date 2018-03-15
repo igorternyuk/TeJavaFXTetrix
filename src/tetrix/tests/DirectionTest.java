@@ -1,4 +1,4 @@
-package tests;
+package tetrix.tests;
 
 import org.junit.Before;
 import org.junit.Test;

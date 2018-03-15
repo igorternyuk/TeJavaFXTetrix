@@ -70,8 +70,10 @@ public class Block {
     }
 
     private void updatePosition() {
-        this.x = parent.getX();
-        this.y = parent.getY();
+        if (this.parent != null) {
+            this.x = this.parent.getX();
+            this.y = this.parent.getY();
+        }
         for (final Coordinate coordinate : this.coordinates) {
             this.x += coordinate.getOffset() * coordinate.getDirection().getDx();
             this.y += coordinate.getOffset() * coordinate.getDirection().getDy();
