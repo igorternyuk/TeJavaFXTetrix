@@ -40,7 +40,7 @@ public enum Shape {
     }, S {
         @Override
         public Color getColor() {
-            return getColor().MAGENTA;
+            return Color.MAGENTA;
         }
     };
 

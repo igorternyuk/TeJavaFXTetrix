@@ -1,6 +1,7 @@
 package tetrix.model;
 
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 
 import java.util.*;
 
@@ -11,7 +12,8 @@ import static tetrix.TetrixApp.TILE_SIZE;
  */
 public class Block {
     private final List<Coordinate> coordinates;
-    private int x, y;
+    private int x, y, rx, ry;
+
     private Tetramino parent;
 
     public Block(final int x, final int y, Coordinate... coordinates) {
@@ -74,10 +76,26 @@ public class Block {
             this.x = this.parent.getX();
             this.y = this.parent.getY();
         }
+        updateRelativeCoordinatesXY();
+        this.x += rx;
+        this.y += ry;
+    }
+
+    public void updateRelativeCoordinatesXY() {
+        this.rx = 0;
+        this.ry = 0;
         for (final Coordinate coordinate : this.coordinates) {
-            this.x += coordinate.getOffset() * coordinate.getDirection().getDx();
-            this.y += coordinate.getOffset() * coordinate.getDirection().getDy();
+            this.rx += coordinate.getOffset() * coordinate.getDirection().getDx();
+            this.ry += coordinate.getOffset() * coordinate.getDirection().getDy();
         }
+    }
+
+    public int getRelativeX() {
+        return this.rx;
+    }
+
+    public int getRelativeY() {
+        return this.ry;
     }
 
     public void move(final int dx, final int dy) {
@@ -102,6 +120,19 @@ public class Block {
     public void draw(GraphicsContext gc) {
         gc.fillRect(this.x * TILE_SIZE, this.y * TILE_SIZE,
                 TILE_SIZE, TILE_SIZE);
+        if (this.parent != null) {
+            final Color color = this.parent.getColor();
+            gc.setStroke(color.brighter().brighter());
+            gc.strokeLine(this.x * TILE_SIZE + 1, this.y * TILE_SIZE + 1, this.x * TILE_SIZE + TILE_SIZE - 1,
+                    this.y * TILE_SIZE + 1);
+            gc.strokeLine(this.x * TILE_SIZE + 1, this.y * TILE_SIZE + 1, this.x * TILE_SIZE + 1,
+                    this.y * TILE_SIZE + TILE_SIZE - 1);
+            gc.setStroke(color.darker().darker());
+            gc.strokeLine(this.x * TILE_SIZE + TILE_SIZE - 1, this.y * TILE_SIZE + 1,
+                    this.x * TILE_SIZE + TILE_SIZE - 1, this.y * TILE_SIZE + TILE_SIZE - 1);
+            gc.strokeLine(this.x * TILE_SIZE + 1, this.y * TILE_SIZE + TILE_SIZE - 1,
+                    this.x * TILE_SIZE + TILE_SIZE - 1, this.y * TILE_SIZE + TILE_SIZE - 1);
+        }
     }
 
     @Override

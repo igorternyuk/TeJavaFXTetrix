@@ -65,10 +65,10 @@ public class Tetramino {
 
         //I-shape
         Tetramino tetraminoI = new Tetramino(Shape.I, 0, 0,
-                new Block(new Coordinate(Direction.UP, 1)),
+                new Block(new Coordinate(Direction.LEFT, 1)),
                 new Block(new Coordinate(Direction.UP, 0)),
-                new Block(new Coordinate(Direction.DOWN, 1)),
-                new Block(new Coordinate(Direction.DOWN, 2))
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.RIGHT, 2))
         );
         prototypes.put(Shape.I, tetraminoI);
 

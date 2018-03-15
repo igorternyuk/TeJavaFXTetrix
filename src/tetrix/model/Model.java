@@ -10,27 +10,34 @@ public class Model {
     public static final int FIELD_WIDTH = 10;
     public static final int FIELD_HEIGHT = 20;
     private static final int TETRAMINO_START_POSITION_X = FIELD_WIDTH / 2;
-    private static final int TETRAMINO_START_POSITION_Y = -2;
+    private static final int TETRAMINO_START_POSITION_Y = 1;
+    private static final int NEXT_TETRAMINO_START_POSITION_X = TETRAMINO_START_POSITION_X;
     private static final int NEXT_TETRAMINO_START_POSITION_Y = -15;
-    private static final int[] SCORE = {300, 500, 700, 1500};
+    private static final int[] SCORE = {0, 300, 500, 700, 1500};
     private final boolean[][] field = new boolean[FIELD_HEIGHT + 1][FIELD_WIDTH];
     private final Random random = new Random();
     private Tetramino activeTetramino, nextTetramino;
-    private int score, numberOfRemovedLines, level;
+    private int score, numberOfRemovedLines, level = 1;
     private boolean isGameOver = false;
 
     public Model() {
-        this.activeTetramino = createRandomTetramino(TETRAMINO_START_POSITION_X, TETRAMINO_START_POSITION_Y);
-        this.nextTetramino = createRandomTetramino(TETRAMINO_START_POSITION_X, NEXT_TETRAMINO_START_POSITION_Y);
-        for (int y = 0; y < FIELD_HEIGHT; ++y) {
-            for (int x = 0; x < FIELD_WIDTH; ++x) {
-                this.field[y][x] = false;
-            }
-        }
-        //Bottom of the well
-        for (int x = 0; x < FIELD_WIDTH; ++x) {
-            this.field[FIELD_HEIGHT][x] = true;
-        }
+        prepareNewGame();
+    }
+
+    private boolean isValidCoordinates(final int x, final int y) {
+        return x >= 0 && x < FIELD_WIDTH && y >= 0 && y < FIELD_HEIGHT + 1;
+    }
+
+    public boolean getTileAt(final int x, final int y) {
+        return isValidCoordinates(x, y) && this.field[y][x];
+    }
+
+    public Tetramino getActiveTetramino() {
+        return this.activeTetramino;
+    }
+
+    public Tetramino getNextTetramino() {
+        return this.nextTetramino;
     }
 
     public int getScore() {
@@ -55,7 +62,7 @@ public class Model {
         this.level = 1;
         clearField();
         this.activeTetramino = createRandomTetramino(TETRAMINO_START_POSITION_X, TETRAMINO_START_POSITION_Y);
-        this.nextTetramino = createRandomTetramino(TETRAMINO_START_POSITION_X, NEXT_TETRAMINO_START_POSITION_Y);
+        this.nextTetramino = createRandomTetramino(NEXT_TETRAMINO_START_POSITION_X, NEXT_TETRAMINO_START_POSITION_Y);
     }
 
     private void clearField() {
@@ -63,6 +70,9 @@ public class Model {
             for (int x = 0; x < FIELD_WIDTH; ++x) {
                 this.field[y][x] = false;
             }
+        }
+        for (int x = 0; x < FIELD_WIDTH; ++x) {
+            this.field[FIELD_HEIGHT][x] = true;
         }
     }
 
@@ -83,9 +93,8 @@ public class Model {
             for (int x = 0; x < FIELD_WIDTH; ++x) {
                 this.field[top][x] = false;
             }
-            --top;
+            ++top;
         }
-
         return removeLinesCounter;
     }
 
@@ -95,6 +104,7 @@ public class Model {
 
     private void switchLevel() {
         if (this.score > 0 && this.score % 1000 == 0) {
+            System.out.println("Level was increased");
             ++this.level;
         }
     }
@@ -112,7 +122,10 @@ public class Model {
     }
 
     private boolean isTetraminoCollidingWalls(final Tetramino tetramino) {
-        return tetramino.getBlocks().stream().anyMatch(block -> this.field[block.getY()][block.getX()]);
+        return tetramino.getBlocks().stream().anyMatch(block -> {
+            //System.out.println("x= " + block.getX() + " y = " + block.getY());
+            return this.field[block.getY()][block.getX()];
+        });
     }
 
     private boolean isTetraminoTouchingGround(final Tetramino tetramino) {
@@ -135,7 +148,9 @@ public class Model {
     }
 
     private void onTouchGround() {
+        System.out.println("The well ground was reached");
         uniteTetraminoWithField(this.activeTetramino);
+        printField();
         final int numberOfRemoveLines = removeFilledLines();
         this.numberOfRemovedLines += numberOfRemoveLines;
         awardPlayer(numberOfRemoveLines);
@@ -155,24 +170,38 @@ public class Model {
     }
 
     public void moveActiveTetraminoLeft() {
-        tryToMakeAMove(tetramino -> tetramino.move(Direction.LEFT), tetramino -> tetramino.move(Direction.RIGHT));
+        if (!isGameOver)
+            tryToMakeAMove(tetramino -> tetramino.move(Direction.LEFT), tetramino -> tetramino.move(Direction.RIGHT));
     }
 
     public void moveActiveTetraminoRight() {
-        tryToMakeAMove(tetramino -> tetramino.move(Direction.RIGHT), tetramino -> tetramino.move(Direction.LEFT));
+        if (!isGameOver)
+            tryToMakeAMove(tetramino -> tetramino.move(Direction.RIGHT), tetramino -> tetramino.move(Direction.LEFT));
     }
 
     public void rotateActiveTetraminoClockwise() {
-        tryToMakeAMove(Tetramino::rotateClockwise, Tetramino::rotateCounterclockwise);
+        if (!isGameOver)
+            tryToMakeAMove(Tetramino::rotateClockwise, Tetramino::rotateCounterclockwise);
     }
 
     public void rotateActiveTetraminoCounterclockwise() {
-        tryToMakeAMove(Tetramino::rotateCounterclockwise, Tetramino::rotateClockwise);
+        if (!isGameOver)
+            tryToMakeAMove(Tetramino::rotateCounterclockwise, Tetramino::rotateClockwise);
     }
 
     public void dropActiveTetraminoDown() {
         while (!isTetraminoTouchingGround(this.activeTetramino)) {
-            tick();
+            this.activeTetramino.move(Direction.DOWN);
+        }
+        onTouchGround();
+    }
+
+    public void printField() {
+        for (int y = 0; y < this.field.length; ++y) {
+            for (int x = 0; x < FIELD_WIDTH; ++x) {
+                System.out.print(this.field[y][x] ? "X" : "_");
+            }
+            System.out.println("\n");
         }
     }
 }
