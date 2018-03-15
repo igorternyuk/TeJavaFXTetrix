@@ -15,7 +15,7 @@
             <menus>
                 <Menu text="Game">
                     <MenuItem text="New game" onAction="#startNewGame"/>
-                    <MenuItem text="Start/Pause" onAction="#onTogglePause"/>
+                    <MenuItem text="Pause/Resume" onAction="#onTogglePause"/>
                     <MenuItem text="Exit" onAction="#onExit"/>
                 </Menu>
             </menus>

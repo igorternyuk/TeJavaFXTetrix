@@ -149,11 +149,6 @@ public class Tetramino {
         return new Tetramino(this.shape, this.x, this.y, newBlocks);
     }
 
-    public void draw(GraphicsContext gc) {
-        gc.setFill(this.shape.getColor());
-        this.blocks.forEach(block -> block.draw(gc));
-    }
-
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;

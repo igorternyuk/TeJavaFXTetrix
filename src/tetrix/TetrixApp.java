@@ -19,7 +19,8 @@ import tetrix.model.Model;
 public class TetrixApp extends Application {
     public static final String TITLE_OF_PROGRAM_WINDOW = "JTetrix";
     public static final int TILE_SIZE = 30;
-    private static final int SIDE_PANEL_WIDTH = 100;
+    private static final int SIDE_PANEL_WIDTH = 110;
+    private static final double FPS = 60;
     private static final int WINDOW_WIDTH = TILE_SIZE * Model.FIELD_WIDTH + SIDE_PANEL_WIDTH;
     private static final int WINDOW_HEIGHT = TILE_SIZE * (Model.FIELD_HEIGHT + 1);
     private Model model = new Model();
@@ -33,8 +34,8 @@ public class TetrixApp extends Application {
         this.timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                time += 0.017;
-                if (time >= 1) {
+                time += (1 / FPS);
+                if (time >= calculateDelayByGameLevel(model.getLevel())) {
                     update();
                     render();
                     time = 0;
@@ -55,6 +56,10 @@ public class TetrixApp extends Application {
         primaryStage.show();
         render();
         this.timer.start();
+    }
+
+    private static double calculateDelayByGameLevel(final int level) {
+        return 2 / (1 + level);
     }
 
     public void onKeyReleased(final KeyEvent event) {
@@ -124,10 +129,15 @@ public class TetrixApp extends Application {
         GraphicsContext gc = this.controller.getGraphicsContext();
         gc.clearRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         renderField(gc);
-        this.model.getActiveTetramino().draw(gc);
         renderSidePanel(gc);
         if (this.model.isGameOver()) {
             renderGameOverMessage(gc);
+            timer.stop();
+        } else {
+            renderActiveTetramino(gc);
+            if (isGamePaused) {
+                renderPauseMessage(gc);
+            }
         }
     }
 
@@ -137,7 +147,7 @@ public class TetrixApp extends Application {
             for (int x = 0; x < Model.FIELD_WIDTH; ++x) {
                 gc.strokeOval(x * TILE_SIZE, y * TILE_SIZE, 2, 2);
                 if (this.model.getTileAt(x, y)) {
-                    renderBlock(gc, Color.BISQUE, x, y);
+                    RenderUtils.renderBlock(gc, Color.BISQUE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE);
                 }
             }
         }
@@ -145,49 +155,48 @@ public class TetrixApp extends Application {
                 Model.FIELD_HEIGHT * TILE_SIZE);
     }
 
-    private void renderSidePanel(GraphicsContext gc) {
-        gc.setStroke(Color.GREEN.darker());
-        final int leftBound = Model.FIELD_WIDTH * TILE_SIZE + 20;
-        gc.strokeText("NEXT:\n", leftBound, 20);
-        //Render next piece on the side panel
-        final int x = leftBound + 30;
-        final int y = 50;
-        this.model.getNextTetramino().getBlocks().forEach(block -> {
-            System.out.println("nx = " + (x + block.getRelativeX() * TILE_SIZE));
-            System.out.println("ny = " + (y + block.getRelativeY() * TILE_SIZE));
-            renderBlock(gc, this.model.getNextTetramino().getColor(), x + block.getRelativeX() * TILE_SIZE,
-                    y + block.getRelativeY() * TILE_SIZE);
+    private void renderActiveTetramino(GraphicsContext gc) {
+        this.model.getActiveTetramino().getBlocks().forEach(block -> {
+            RenderUtils.renderBlock(gc, this.model.getNextTetramino().getColor(), block.getX() * TILE_SIZE,
+                    block.getY() * TILE_SIZE, TILE_SIZE);
         });
+    }
 
+    private void renderSidePanel(GraphicsContext gc) {
+        final int leftBound = Model.FIELD_WIDTH * TILE_SIZE + 20;
+        //Render next piece on the side panel
+        final int x = leftBound + 12;
+        final int y = 60;
+        this.model.getNextTetramino().getBlocks().forEach(block -> {
+            RenderUtils.renderBlock(gc, this.model.getNextTetramino().getColor(),
+                    x + block.getRelativeX() * 3 * TILE_SIZE / 4,
+                    y + block.getRelativeY() * 3 * TILE_SIZE / 4,
+                    3 * TILE_SIZE / 4);
+        });
+        gc.setStroke(Color.GREEN.darker().darker());
+        gc.setFont(new Font("Ubuntu Mono", 18));
+        gc.strokeText("NEXT:\n", leftBound, 20);
+        gc.strokeText("NEXT:\n", leftBound, 20);
         gc.strokeText("SCORE:\n" + this.model.getScore(), leftBound, 170);
-        gc.strokeText("LINES:\n" + this.model.getNumberOfRemovedLines(), leftBound, 200);
-        gc.strokeText("LEVEL:\n" + this.model.getLevel(), leftBound, 230);
+        gc.strokeText("LINES:\n" + this.model.getNumberOfRemovedLines(), leftBound, 220);
+        gc.strokeText("LEVEL:\n" + this.model.getLevel(), leftBound, 260);
 
     }
 
     private void renderGameOverMessage(GraphicsContext gc) {
-        gc.setFont(new Font("Arial", 28));
+        gc.setFont(new Font("Ubuntu Mono", 40));
         gc.setStroke(Color.RED);
         gc.strokeText("GAME OVER!!!", 50, 250);
     }
 
-    private void renderBlock(GraphicsContext gc, final Color color, final int x, final int y) {
-        gc.setFill(color);
-        gc.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        gc.setStroke(color.brighter().brighter());
-        gc.strokeLine(x * TILE_SIZE + 1, y * TILE_SIZE + 1, x * TILE_SIZE + TILE_SIZE - 1,
-                y * TILE_SIZE + 1);
-        gc.strokeLine(x * TILE_SIZE + 1, y * TILE_SIZE + 1, x * TILE_SIZE + 1,
-                y * TILE_SIZE + TILE_SIZE - 1);
-        gc.setStroke(color.darker().darker());
-        gc.strokeLine(x * TILE_SIZE + TILE_SIZE - 1, y * TILE_SIZE + 1,
-                x * TILE_SIZE + TILE_SIZE - 1, y * TILE_SIZE + TILE_SIZE - 1);
-        gc.strokeLine(x * TILE_SIZE + 1, y * TILE_SIZE + TILE_SIZE - 1,
-                x * TILE_SIZE + TILE_SIZE - 1, y * TILE_SIZE + TILE_SIZE - 1);
+    private void renderPauseMessage(GraphicsContext gc) {
+        gc.setFont(new Font("Ubuntu Mono", 40));
+        gc.setStroke(Color.GREEN);
+        gc.strokeText("GAME PAUSED", 50, 250);
     }
 
-
     public static void main(String[] args) {
+        //Font.getFamilies().forEach(System.out::println);
         launch(args);
     }
 }

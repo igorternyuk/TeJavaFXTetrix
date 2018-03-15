@@ -10,7 +10,7 @@ public class Model {
     public static final int FIELD_WIDTH = 10;
     public static final int FIELD_HEIGHT = 20;
     private static final int TETRAMINO_START_POSITION_X = FIELD_WIDTH / 2;
-    private static final int TETRAMINO_START_POSITION_Y = 1;
+    private static final int TETRAMINO_START_POSITION_Y = 0;
     private static final int NEXT_TETRAMINO_START_POSITION_X = TETRAMINO_START_POSITION_X;
     private static final int NEXT_TETRAMINO_START_POSITION_Y = -15;
     private static final int[] SCORE = {0, 300, 500, 700, 1500};
@@ -63,6 +63,7 @@ public class Model {
         clearField();
         this.activeTetramino = createRandomTetramino(TETRAMINO_START_POSITION_X, TETRAMINO_START_POSITION_Y);
         this.nextTetramino = createRandomTetramino(NEXT_TETRAMINO_START_POSITION_X, NEXT_TETRAMINO_START_POSITION_Y);
+        this.isGameOver = false;
     }
 
     private void clearField() {
@@ -148,9 +149,9 @@ public class Model {
     }
 
     private void onTouchGround() {
-        System.out.println("The well ground was reached");
+        //System.out.println("The well ground was reached");
         uniteTetraminoWithField(this.activeTetramino);
-        printField();
+        //printField();
         final int numberOfRemoveLines = removeFilledLines();
         this.numberOfRemovedLines += numberOfRemoveLines;
         awardPlayer(numberOfRemoveLines);

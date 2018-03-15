@@ -2,6 +2,7 @@ package tetrix.model;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import tetrix.RenderUtils;
 
 import java.util.*;
 
@@ -115,24 +116,6 @@ public class Block {
 
     public Block copy() {
         return new Block(this.x, this.y, this.coordinates);
-    }
-
-    public void draw(GraphicsContext gc) {
-        gc.fillRect(this.x * TILE_SIZE, this.y * TILE_SIZE,
-                TILE_SIZE, TILE_SIZE);
-        if (this.parent != null) {
-            final Color color = this.parent.getColor();
-            gc.setStroke(color.brighter().brighter());
-            gc.strokeLine(this.x * TILE_SIZE + 1, this.y * TILE_SIZE + 1, this.x * TILE_SIZE + TILE_SIZE - 1,
-                    this.y * TILE_SIZE + 1);
-            gc.strokeLine(this.x * TILE_SIZE + 1, this.y * TILE_SIZE + 1, this.x * TILE_SIZE + 1,
-                    this.y * TILE_SIZE + TILE_SIZE - 1);
-            gc.setStroke(color.darker().darker());
-            gc.strokeLine(this.x * TILE_SIZE + TILE_SIZE - 1, this.y * TILE_SIZE + 1,
-                    this.x * TILE_SIZE + TILE_SIZE - 1, this.y * TILE_SIZE + TILE_SIZE - 1);
-            gc.strokeLine(this.x * TILE_SIZE + 1, this.y * TILE_SIZE + TILE_SIZE - 1,
-                    this.x * TILE_SIZE + TILE_SIZE - 1, this.y * TILE_SIZE + TILE_SIZE - 1);
-        }
     }
 
     @Override
