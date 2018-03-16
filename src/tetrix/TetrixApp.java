@@ -15,19 +15,27 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import tetrix.model.Model;
+import tetrix.model.Tetramino;
 
 public class TetrixApp extends Application {
-    public static final String TITLE_OF_PROGRAM_WINDOW = "JTetrix";
-    public static final int TILE_SIZE = 30;
-    private static final int SIDE_PANEL_WIDTH = 110;
-    private static final double FPS = 60;
+    private static final String TITLE_OF_PROGRAM_WINDOW = "JTetrix";
+    private static final int TILE_SIZE = 30;
+    private static final int SIDE_PANEL_WIDTH = 100;
+    private static final double FPS = 60.0;
     private static final int WINDOW_WIDTH = TILE_SIZE * Model.FIELD_WIDTH + SIDE_PANEL_WIDTH;
     private static final int WINDOW_HEIGHT = TILE_SIZE * (Model.FIELD_HEIGHT + 1);
+    private static final String GAME_PAUSED_MESSAGE = "GAME PAUSED";
+    private static final String GAME_OVER_MESSAGE = "GAME OVER!!!";
+    private static final String EXIT_DIALOG_WINDOW_MESSAGE = "Do you really want to exit?";
+    private static final String EXIT_DIALOG_WINDOW_TITLE = "Confirm exit, please";
+    private static final Font smallFont = new Font("Ubuntu Mono", 18);
+    private static final Font largeFont = new Font("Ubuntu Mono", 40);
     private Model model = new Model();
     private AnimationTimer timer;
     private double time = 0;
     private boolean isGamePaused = false;
     private TetrixController controller;
+
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -62,7 +70,7 @@ public class TetrixApp extends Application {
         return 2 / (1 + level);
     }
 
-    public void onKeyReleased(final KeyEvent event) {
+    private void onKeyReleased(final KeyEvent event) {
         final KeyCode keyCode = event.getCode();
         if (!this.isGamePaused) {
             if (keyCode.equals(KeyCode.LEFT)) {
@@ -108,9 +116,9 @@ public class TetrixApp extends Application {
     }
 
     private void onExitEvent() {
-        final Alert alert = new Alert(Alert.AlertType.WARNING, "Do you really want to exit?",
+        final Alert alert = new Alert(Alert.AlertType.WARNING, EXIT_DIALOG_WINDOW_MESSAGE,
                 ButtonType.YES, ButtonType.NO);
-        alert.setTitle("Confirm exit, please");
+        alert.setTitle(EXIT_DIALOG_WINDOW_TITLE);
         alert.showAndWait();
         if (alert.getResult() == ButtonType.YES) {
             Platform.exit();
@@ -122,7 +130,6 @@ public class TetrixApp extends Application {
 
     private void update() {
         this.model.tick();
-        System.out.println("ty = " + model.getActiveTetramino().getY());
     }
 
     private void render() {
@@ -156,10 +163,9 @@ public class TetrixApp extends Application {
     }
 
     private void renderActiveTetramino(GraphicsContext gc) {
-        this.model.getActiveTetramino().getBlocks().forEach(block -> {
-            RenderUtils.renderBlock(gc, this.model.getNextTetramino().getColor(), block.getX() * TILE_SIZE,
-                    block.getY() * TILE_SIZE, TILE_SIZE);
-        });
+        this.model.getActiveTetramino().getBlocks().forEach(block ->
+                RenderUtils.renderBlock(gc, this.model.getActiveTetramino().getColor(), block.getX() * TILE_SIZE,
+                        block.getY() * TILE_SIZE, TILE_SIZE));
     }
 
     private void renderSidePanel(GraphicsContext gc) {
@@ -167,15 +173,13 @@ public class TetrixApp extends Application {
         //Render next piece on the side panel
         final int x = leftBound + 12;
         final int y = 60;
-        this.model.getNextTetramino().getBlocks().forEach(block -> {
-            RenderUtils.renderBlock(gc, this.model.getNextTetramino().getColor(),
-                    x + block.getRelativeX() * 3 * TILE_SIZE / 4,
-                    y + block.getRelativeY() * 3 * TILE_SIZE / 4,
-                    3 * TILE_SIZE / 4);
-        });
+        Model.getPrototype(this.model.getNextShape()).copy().getBlocks().forEach(block ->
+                RenderUtils.renderBlock(gc, this.model.getNextShape().getColor(),
+                        x + block.getRelativeX() * 3 * TILE_SIZE / 5,
+                        y + block.getRelativeY() * 3 * TILE_SIZE / 5,
+                        3 * TILE_SIZE / 5));
         gc.setStroke(Color.GREEN.darker().darker());
-        gc.setFont(new Font("Ubuntu Mono", 18));
-        gc.strokeText("NEXT:\n", leftBound, 20);
+        gc.setFont(smallFont);
         gc.strokeText("NEXT:\n", leftBound, 20);
         gc.strokeText("SCORE:\n" + this.model.getScore(), leftBound, 170);
         gc.strokeText("LINES:\n" + this.model.getNumberOfRemovedLines(), leftBound, 220);
@@ -184,15 +188,15 @@ public class TetrixApp extends Application {
     }
 
     private void renderGameOverMessage(GraphicsContext gc) {
-        gc.setFont(new Font("Ubuntu Mono", 40));
+        gc.setFont(largeFont);
         gc.setStroke(Color.RED);
-        gc.strokeText("GAME OVER!!!", 50, 250);
+        gc.strokeText(GAME_OVER_MESSAGE, 50, 250);
     }
 
     private void renderPauseMessage(GraphicsContext gc) {
-        gc.setFont(new Font("Ubuntu Mono", 40));
+        gc.setFont(largeFont);
         gc.setStroke(Color.GREEN);
-        gc.strokeText("GAME PAUSED", 50, 250);
+        gc.strokeText(GAME_PAUSED_MESSAGE, 50, 250);
     }
 
     public static void main(String[] args) {

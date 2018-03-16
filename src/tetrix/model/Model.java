@@ -1,6 +1,8 @@
 package tetrix.model;
 
-import java.util.Random;
+import sun.security.provider.SHA;
+
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -11,17 +13,105 @@ public class Model {
     public static final int FIELD_HEIGHT = 20;
     private static final int TETRAMINO_START_POSITION_X = FIELD_WIDTH / 2;
     private static final int TETRAMINO_START_POSITION_Y = 0;
-    private static final int NEXT_TETRAMINO_START_POSITION_X = TETRAMINO_START_POSITION_X;
-    private static final int NEXT_TETRAMINO_START_POSITION_Y = -15;
+    private static final int NEXT_LEVEL_SCORE = 500;
+    private static final Map<Shape, Tetramino> PROTOTYPES = createPrototypes();
     private static final int[] SCORE = {0, 300, 500, 700, 1500};
     private final boolean[][] field = new boolean[FIELD_HEIGHT + 1][FIELD_WIDTH];
     private final Random random = new Random();
-    private Tetramino activeTetramino, nextTetramino;
+    private Tetramino activeTetramino;
+    private Shape nextShape;
     private int score, numberOfRemovedLines, level = 1;
     private boolean isGameOver = false;
 
     public Model() {
         prepareNewGame();
+    }
+
+    private static Map<Shape, Tetramino> createPrototypes() {
+        Map<Shape, Tetramino> prototypes = new HashMap<>();
+
+        //L-shape
+        Tetramino tetraminoL = new Tetramino(Shape.L, 0, 0,
+                new Block(new Coordinate(Direction.UP, 1)),
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.RIGHT, 1))
+        );
+        prototypes.put(Shape.L, tetraminoL);
+
+        //J-shape
+        Tetramino tetraminoJ = new Tetramino(Shape.J, 0, 0,
+                new Block(new Coordinate(Direction.UP, 1)),
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.LEFT, 1))
+        );
+        prototypes.put(Shape.J, tetraminoJ);
+
+        //O-shape
+        Tetramino tetraminoO = new Tetramino(Shape.O, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.RIGHT, 1))
+        );
+        prototypes.put(Shape.O, tetraminoO);
+
+        //I-shape
+        Tetramino tetraminoI = new Tetramino(Shape.I, 0, 0,
+                new Block(new Coordinate(Direction.LEFT, 1)),
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.RIGHT, 2))
+        );
+        prototypes.put(Shape.I, tetraminoI);
+
+        //T-shape
+        Tetramino tetraminoT = new Tetramino(Shape.T, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.LEFT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1))
+        );
+        prototypes.put(Shape.T, tetraminoT);
+
+        //S-shape
+        Tetramino tetraminoS = new Tetramino(Shape.S, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.RIGHT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.LEFT, 1))
+        );
+        prototypes.put(Shape.S, tetraminoS);
+
+        //Z-shape
+        Tetramino tetraminoZ = new Tetramino(Shape.Z, 0, 0,
+                new Block(new Coordinate(Direction.UP, 0)),
+                new Block(new Coordinate(Direction.LEFT, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1)),
+                new Block(new Coordinate(Direction.DOWN, 1), new Coordinate(Direction.RIGHT, 1))
+        );
+        prototypes.put(Shape.Z, tetraminoZ);
+        return prototypes;
+    }
+
+    private static Tetramino createTetramino(final Shape shape, final int x, final int y) {
+        if (PROTOTYPES.get(shape) != null) {
+            final Tetramino newTetramino = PROTOTYPES.get(shape).copy();
+            newTetramino.move(x, y);
+            return newTetramino;
+        }
+        return PROTOTYPES.get(Shape.L).copy();
+    }
+
+    public static Tetramino getPrototype(final Shape shape) {
+        if (PROTOTYPES.get(shape) != null) {
+            Tetramino tetramino = PROTOTYPES.get(shape).copy();
+            tetramino.adjustPosition();
+            return tetramino;
+        } else {
+            throw new IllegalArgumentException("Invalid shape");
+        }
     }
 
     private boolean isValidCoordinates(final int x, final int y) {
@@ -36,10 +126,6 @@ public class Model {
         return this.activeTetramino;
     }
 
-    public Tetramino getNextTetramino() {
-        return this.nextTetramino;
-    }
-
     public int getScore() {
         return this.score;
     }
@@ -52,6 +138,10 @@ public class Model {
         return this.level;
     }
 
+    public Shape getNextShape() {
+        return this.nextShape;
+    }
+
     public boolean isGameOver() {
         return this.isGameOver;
     }
@@ -62,7 +152,11 @@ public class Model {
         this.level = 1;
         clearField();
         this.activeTetramino = createRandomTetramino(TETRAMINO_START_POSITION_X, TETRAMINO_START_POSITION_Y);
-        this.nextTetramino = createRandomTetramino(NEXT_TETRAMINO_START_POSITION_X, NEXT_TETRAMINO_START_POSITION_Y);
+        int randomIndex = random.nextInt(Shape.values().length);
+        while (randomIndex == this.activeTetramino.getShape().ordinal()) {
+            randomIndex = random.nextInt(Shape.values().length);
+        }
+        this.nextShape = Shape.values()[randomIndex];
         this.isGameOver = false;
     }
 
@@ -87,9 +181,7 @@ public class Model {
             }
             ++removeLinesCounter;
             for (int y = line; y > top; --y) {
-                for (int x = 0; x < FIELD_WIDTH; ++x) {
-                    this.field[y][x] = this.field[y - 1][x];
-                }
+                this.field[y] = Arrays.copyOf(this.field[y - 1], this.field[y - 1].length);
             }
             for (int x = 0; x < FIELD_WIDTH; ++x) {
                 this.field[top][x] = false;
@@ -104,14 +196,13 @@ public class Model {
     }
 
     private void switchLevel() {
-        if (this.score > 0 && this.score % 1000 == 0) {
-            System.out.println("Level was increased");
+        if (this.score > 0 && this.score % NEXT_LEVEL_SCORE == 0) {
             ++this.level;
         }
     }
 
     private Tetramino createRandomTetramino(final int x, final int y) {
-        return Tetramino.createTetramino(Shape.values()[random.nextInt(Tetramino.NUMBER_OF_SHAPES)], x, y);
+        return createTetramino(Shape.values()[random.nextInt(Tetramino.NUMBER_OF_SHAPES)], x, y);
     }
 
     private boolean isBlockOutOfFieldBounds(final Block block) {
@@ -123,10 +214,7 @@ public class Model {
     }
 
     private boolean isTetraminoCollidingWalls(final Tetramino tetramino) {
-        return tetramino.getBlocks().stream().anyMatch(block -> {
-            //System.out.println("x= " + block.getX() + " y = " + block.getY());
-            return this.field[block.getY()][block.getX()];
-        });
+        return tetramino.getBlocks().stream().anyMatch(block -> this.field[block.getY()][block.getX()]);
     }
 
     private boolean isTetraminoTouchingGround(final Tetramino tetramino) {
@@ -135,6 +223,7 @@ public class Model {
 
     private void uniteTetraminoWithField(final Tetramino tetramino) {
         tetramino.getBlocks().forEach(block -> this.field[block.getY()][block.getX()] = true);
+        tetramino.adjustPosition();
     }
 
     private void tryToMakeAMove(Consumer<Tetramino> onSuccess, Consumer<Tetramino> onFail) {
@@ -149,19 +238,25 @@ public class Model {
     }
 
     private void onTouchGround() {
-        //System.out.println("The well ground was reached");
         uniteTetraminoWithField(this.activeTetramino);
-        //printField();
         final int numberOfRemoveLines = removeFilledLines();
         this.numberOfRemovedLines += numberOfRemoveLines;
         awardPlayer(numberOfRemoveLines);
         switchLevel();
-        this.activeTetramino = this.nextTetramino;
-        this.activeTetramino.move(0, TETRAMINO_START_POSITION_Y - NEXT_TETRAMINO_START_POSITION_Y);
-        this.nextTetramino = createRandomTetramino(TETRAMINO_START_POSITION_X, NEXT_TETRAMINO_START_POSITION_Y);
+        spawnNewRandomTetramino();
         if (isTetraminoTouchingGround(this.activeTetramino)) {
             this.isGameOver = true;
         }
+    }
+
+    private void spawnNewRandomTetramino() {
+        this.activeTetramino = createTetramino(this.nextShape, TETRAMINO_START_POSITION_X,
+                TETRAMINO_START_POSITION_Y);
+        System.out.println("Angle before adjusting = " + this.activeTetramino.getAngle());
+        this.activeTetramino.adjustPosition();
+        System.out.println("Angle after adjusting = " + this.activeTetramino.getAngle());
+        System.out.println("this.activeTetramino = " + this.activeTetramino);
+        this.nextShape = Shape.values()[random.nextInt(Shape.values().length)];
     }
 
     public void tick() {
@@ -180,17 +275,25 @@ public class Model {
             tryToMakeAMove(tetramino -> tetramino.move(Direction.RIGHT), tetramino -> tetramino.move(Direction.LEFT));
     }
 
+    private boolean isPositionOK(final Tetramino tetramino) {
+        return tetramino.getBlocks().stream().allMatch(block ->
+                block.getY() >= (this.activeTetramino.getShape().equals(Shape.I) ? 2 : 1));
+    }
+
     public void rotateActiveTetraminoClockwise() {
-        if (!isGameOver)
+        if (!isGameOver && isPositionOK(this.activeTetramino)) {
             tryToMakeAMove(Tetramino::rotateClockwise, Tetramino::rotateCounterclockwise);
+        }
     }
 
     public void rotateActiveTetraminoCounterclockwise() {
-        if (!isGameOver)
+        if (!isGameOver && isPositionOK(this.activeTetramino)) {
             tryToMakeAMove(Tetramino::rotateCounterclockwise, Tetramino::rotateClockwise);
+        }
     }
 
     public void dropActiveTetraminoDown() {
+        if (!isPositionOK(this.activeTetramino)) return;
         while (!isTetraminoTouchingGround(this.activeTetramino)) {
             this.activeTetramino.move(Direction.DOWN);
         }
@@ -198,9 +301,9 @@ public class Model {
     }
 
     public void printField() {
-        for (int y = 0; y < this.field.length; ++y) {
+        for (boolean[] aField : this.field) {
             for (int x = 0; x < FIELD_WIDTH; ++x) {
-                System.out.print(this.field[y][x] ? "X" : "_");
+                System.out.print(aField[x] ? "X" : "_");
             }
             System.out.println("\n");
         }

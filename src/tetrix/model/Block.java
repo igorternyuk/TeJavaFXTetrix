@@ -1,19 +1,13 @@
 package tetrix.model;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
-import tetrix.RenderUtils;
-
 import java.util.*;
-
-import static tetrix.TetrixApp.TILE_SIZE;
 
 /**
  * Created by igor on 14.03.18.
  */
 public class Block {
     private final List<Coordinate> coordinates;
-    private int x, y, rx, ry;
+    private int cx, cy, x, y, rx, ry;
 
     private Tetramino parent;
 
@@ -23,7 +17,7 @@ public class Block {
         this.y = y;
     }
 
-    public Block(Coordinate... coordinates) {
+    Block(Coordinate... coordinates) {
         this.coordinates = new ArrayList<>(Arrays.asList(coordinates));
         this.x = 0;
         this.y = 0;
@@ -57,18 +51,8 @@ public class Block {
         return this.parent;
     }
 
-    public void setParent(final Tetramino parent) {
+    void setParent(final Tetramino parent) {
         this.parent = parent;
-        updatePosition();
-    }
-
-    public void rotateClockwise() {
-        this.coordinates.forEach(coordinate -> coordinate.setDirection(coordinate.getDirection().nextClockwise()));
-        updatePosition();
-    }
-
-    public void rotateCounterclockwise() {
-        this.coordinates.forEach(coordinate -> coordinate.setDirection(coordinate.getDirection().nextCounterclockwise()));
         updatePosition();
     }
 
@@ -82,7 +66,7 @@ public class Block {
         this.y += ry;
     }
 
-    public void updateRelativeCoordinatesXY() {
+    private void updateRelativeCoordinatesXY() {
         this.rx = 0;
         this.ry = 0;
         for (final Coordinate coordinate : this.coordinates) {
@@ -114,7 +98,17 @@ public class Block {
         this.y += direction.getDy() * offset;
     }
 
-    public Block copy() {
+    public void rotateClockwise() {
+        this.coordinates.forEach(coordinate -> coordinate.setDirection(coordinate.getDirection().nextClockwise()));
+        updatePosition();
+    }
+
+    public void rotateCounterclockwise() {
+        this.coordinates.forEach(coordinate -> coordinate.setDirection(coordinate.getDirection().nextCounterclockwise()));
+        updatePosition();
+    }
+
+    Block copy() {
         return new Block(this.x, this.y, this.coordinates);
     }
 
@@ -123,10 +117,11 @@ public class Block {
         if (this == other) return true;
         if (other == null || !(other instanceof Block)) return false;
         final Block otherBlock = (Block) other;
-        return this.coordinates.equals(otherBlock.getCoordinates())
+        return coordinates.equals(otherBlock.getCoordinates())
                 && Objects.equals(this.x, otherBlock.getX())
                 && Objects.equals(this.y, otherBlock.getY())
-                && Objects.equals(this.parent, otherBlock.getParent());
+                && Objects.equals(this.rx, otherBlock.getRelativeX())
+                && Objects.equals(this.ry, otherBlock.getRelativeY());
     }
 
     @Override
@@ -134,7 +129,14 @@ public class Block {
         final int prime = 31;
         int result = x;
         result = prime * result + y;
-        result = prime * result + parent.hashCode();
+        result = prime * result + rx;
+        result = prime * result + ry;
+//        result = prime * result + parent.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("rx = %d ry = %d", rx, ry);
     }
 }
