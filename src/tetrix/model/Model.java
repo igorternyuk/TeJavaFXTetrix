@@ -196,7 +196,9 @@ public class Model {
     }
 
     private void switchLevel() {
-        if (this.score > 0 && this.score % NEXT_LEVEL_SCORE == 0) {
+        //System.out.println("Trying to switch level = " + this.score);
+        if (this.score > this.level * NEXT_LEVEL_SCORE) {
+            //System.out.println("Next level score = " + this.score);
             ++this.level;
         }
     }
@@ -252,11 +254,11 @@ public class Model {
     private void spawnNewRandomTetramino() {
         this.activeTetramino = createTetramino(this.nextShape, TETRAMINO_START_POSITION_X,
                 TETRAMINO_START_POSITION_Y);
-        System.out.println("Angle before adjusting = " + this.activeTetramino.getAngle());
         this.activeTetramino.adjustPosition();
-        System.out.println("Angle after adjusting = " + this.activeTetramino.getAngle());
-        System.out.println("this.activeTetramino = " + this.activeTetramino);
         this.nextShape = Shape.values()[random.nextInt(Shape.values().length)];
+        do {
+            this.nextShape = Shape.values()[random.nextInt(Shape.values().length)];
+        } while (this.nextShape == this.activeTetramino.getShape());
     }
 
     public void tick() {
