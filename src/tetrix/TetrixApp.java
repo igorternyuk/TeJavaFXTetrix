@@ -108,6 +108,7 @@ public class TetrixApp extends Application {
             this.isGamePaused = true;
             this.timer.stop();
         }
+        renderPhase();
     }
 
     private void onExitEvent() {
